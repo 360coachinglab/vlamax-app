@@ -1,8 +1,8 @@
-# VLamax Predictor Web-App mit Plot
+
+# VLamax Predictor Web-App
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import joblib
-import matplotlib.pyplot as plt
 import streamlit as st
 
 # ---- Daten ----
@@ -32,16 +32,8 @@ if st.button("VLamax berechnen"):
     prediction = modell.predict([[gewicht, dauer, watt]])[0]
     st.success(f"Geschätzte VLamax: {prediction:.3f} mmol/l/s")
 
-# ---- Plot ----
-st.subheader("Vergleich mit vorhandenen Athleten")
-df["Modell-VLamax"] = modell.predict(X)
-fig, ax = plt.subplots()
-ax.scatter(df["Athlet"], df["VLamax"], label="INSCYD", color="blue")
-ax.scatter(df["Athlet"], df["Modell-VLamax"], label="Modell", color="orange", marker="x")
-ax.set_ylabel("VLamax (mmol/l/s)")
-ax.set_title("Modell vs INSCYD")
-ax.legend()
-st.pyplot(fig)
+    # Balkenanzeige
+    st.progress(min(max(prediction, 0.0), 1.0))
 
 # ---- Modell speichern (optional) ----
 joblib.dump(modell, "vlamax_model.joblib")
