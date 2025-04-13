@@ -21,7 +21,7 @@ y = df["VLamax"]
 modell = LinearRegression().fit(X, y)
 
 # ---- Streamlit UI ----
-st.image("360coachinglab gross.png", width=300)
+st.image("https://raw.githubusercontent.com/360coachinglab/vlamax-app/main/360coachinglab%20gross.png", width=300)
 st.title("VLamax Predictor")
 st.write("Basierend auf Sprintleistung, Gewicht und Dauer")
 
