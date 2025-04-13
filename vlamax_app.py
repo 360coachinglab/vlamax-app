@@ -21,7 +21,7 @@ y = df["VLamax"]
 modell = LinearRegression().fit(X, y)
 
 # ---- Streamlit UI ----
-st.image("https://360coachinglab.ch/wp-content/uploads/2024/03/logo360.png", width=200)
+st.image("360coachinglab gross.png", width=300)
 st.title("VLamax Predictor")
 st.write("Basierend auf Sprintleistung, Gewicht und Dauer")
 
@@ -33,21 +33,16 @@ if st.button("VLamax berechnen"):
     prediction = modell.predict([[gewicht, dauer, watt]])[0]
     st.success(f"Geschätzte VLamax: {prediction:.3f} mmol/l/s")
 
-    # Stilisiertes Gauge anzeigen
+    # Batterie-Anzeige als HTML + CSS
     components.html(f"""
-    <div style='width: 100%; text-align: center;'>
-        <div style='font-size: 1.5rem; margin-bottom: 0.5rem;'>Gauge-Anzeige</div>
-        <div style='width: 300px; height: 150px; margin: 0 auto; position: relative;'>
-            <svg viewBox="0 0 100 50">
-              <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#eee" stroke-width="8" />
-              <path d="M10,50 A40,40 0 0,1 {10 + 80 * min(max(prediction, 0), 1):.1f},50" fill="none" stroke="#4CAF50" stroke-width="8" />
-            </svg>
-            <div style='position: absolute; top: 60px; left: 50%; transform: translateX(-50%); font-size: 1.2rem;'>
-              {prediction:.2f} mmol/l/s
-            </div>
+    <div style='display: flex; flex-direction: column; align-items: center;'>
+        <div style='font-size: 1.2rem; margin-bottom: 0.5rem;'>VLamax Batterie</div>
+        <div style='width: 60px; height: 200px; border: 2px solid #333; border-radius: 6px; position: relative; background: #e0e0e0;'>
+            <div style='width: 100%; background: #4CAF50; position: absolute; bottom: 0; height: {min(max(prediction, 0), 1) * 100:.1f}%'></div>
         </div>
+        <div style='margin-top: 8px; font-weight: bold;'>{prediction:.2f} mmol/l/s</div>
     </div>
-    """, height=180)
+    """, height=280)
 
 # ---- Modell speichern (optional) ----
 joblib.dump(modell, "vlamax_model.joblib")
