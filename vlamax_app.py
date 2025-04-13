@@ -22,7 +22,7 @@ modell = LinearRegression().fit(X, y)
 
 # ---- Streamlit UI ----
 st.image("https://raw.githubusercontent.com/360coachinglab/vlamax-app/main/360coachinglab%20gross.png", width=300)
-st.title("VLamax Predictor")
+st.title("VLamax Auswertung")
 st.write("Basierend auf Sprintleistung, Gewicht und Dauer")
 
 gewicht = st.number_input("Gewicht (kg)", min_value=30.0, max_value=120.0, value=70.0, step=0.1)
@@ -36,7 +36,7 @@ if st.button("VLamax berechnen"):
     # Batterie-Anzeige als HTML + CSS
     components.html(f"""
     <div style='display: flex; flex-direction: column; align-items: center;'>
-        <div style='font-size: 1.2rem; margin-bottom: 0.5rem;'>VLamax Batterie</div>
+        <div style='font-size: 1.2rem; margin-bottom: 0.5rem;'>VLamax</div>
         <div style='width: 60px; height: 200px; border: 2px solid #333; border-radius: 6px; position: relative; background: #e0e0e0;'>
             <div style='width: 100%; background: #4CAF50; position: absolute; bottom: 0; height: {min(max(prediction, 0), 1) * 100:.1f}%'></div>
         </div>
