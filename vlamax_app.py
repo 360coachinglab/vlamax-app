@@ -66,30 +66,35 @@ watt_peak = st.number_input("Spitzenleistung (W)", min_value=200, max_value=2000
 ffm = gewicht * (1 - koerperfett / 100)
 geschlecht_code = 1 if geschlecht.lower() == "frau" else 0
 
-# ---- Modelltraining auf aktueller CSV ----
-daten = pd.read_csv(CSV_PATH)
-daten["FFM"] = daten["Gewicht (kg)"] * (1 - daten["Körperfett (%)"] / 100)
-daten["Geschlecht_code"] = daten["Geschlecht"].str.lower().map({"mann": 0, "frau": 1})
+# ---- Modelltraining mit Datenprüfung ----
+if os.path.exists(CSV_PATH):
+    daten = pd.read_csv(CSV_PATH)
+    if len(daten) < 2:
+        st.warning("Nicht genügend Daten zum Trainieren des Modells. Bitte ergänze mehr Testdaten.")
+    else:
+        daten["FFM"] = daten["Gewicht (kg)"] * (1 - daten["Körperfett (%)"] / 100)
+        daten["Geschlecht_code"] = daten["Geschlecht"].str.lower().map({"mann": 0, "frau": 1})
 
-X = daten[["FFM", "Sprintdauer (s)", "Watt Durchschnitt", "Watt Peak", "Geschlecht_code"]]
-y = daten["VLamax INSCYD (mmol/l/s)"]
-modell = LinearRegression().fit(X, y)
+        X = daten[["FFM", "Sprintdauer (s)", "Watt Durchschnitt", "Watt Peak", "Geschlecht_code"]]
+        y = daten["VLamax INSCYD (mmol/l/s)"]
+        modell = LinearRegression().fit(X, y)
 
-# ---- Vorhersage ----
-if st.button("VLamax berechnen"):
-    prediction = modell.predict([[ffm, dauer, watt_avg, watt_peak, geschlecht_code]])[0]
-    st.success(f"Geschätzte VLamax: {prediction:.3f} mmol/l/s")
+        # ---- Vorhersage ----
+        if st.button("VLamax berechnen"):
+            prediction = modell.predict([[ffm, dauer, watt_avg, watt_peak, geschlecht_code]])[0]
+            st.success(f"Geschätzte VLamax: {prediction:.3f} mmol/l/s")
 
-    # Batterie-Anzeige als HTML + CSS
-    components.html(f"""
-    <div style='display: flex; flex-direction: column; align-items: center;'>
-        <div style='font-size: 1.2rem; margin-bottom: 0.5rem;'>VLamax</div>
-        <div style='width: 60px; height: 200px; border: 2px solid #333; border-radius: 6px; position: relative; background: #e0e0e0;'>
-            <div style='width: 100%; background: #4CAF50; position: absolute; bottom: 0; height: {min(max(prediction, 0), 1) * 100:.1f}%'></div>
-        </div>
-        <div style='margin-top: 8px; font-weight: bold;'>{prediction:.2f} mmol/l/s</div>
-    </div>
-    """, height=280)
+            # Batterie-Anzeige als HTML + CSS
+            components.html(f"""
+            <div style='display: flex; flex-direction: column; align-items: center;'>
+                <div style='font-size: 1.2rem; margin-bottom: 0.5rem;'>VLamax</div>
+                <div style='width: 60px; height: 200px; border: 2px solid #333; border-radius: 6px; position: relative; background: #e0e0e0;'>
+                    <div style='width: 100%; background: #4CAF50; position: absolute; bottom: 0; height: {min(max(prediction, 0), 1) * 100:.1f}%'></div>
+                </div>
+                <div style='margin-top: 8px; font-weight: bold;'>{prediction:.2f} mmol/l/s</div>
+            </div>
+            """, height=280)
 
-# ---- Modell speichern ----
-joblib.dump(modell, "vlamax_model.joblib")
+        joblib.dump(modell, "vlamax_model.joblib")
+else:
+    st.warning("CSV-Datei nicht gefunden. Bitte lade zuerst Testdaten hoch.")
