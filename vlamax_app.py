@@ -1,36 +1,42 @@
-# VLamax Predictor Web-App
+# VLamax Predictor Web-App mit erweitertem Modell
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LinearRegression
 import joblib
 import streamlit as st
 import streamlit.components.v1 as components
 
-# ---- Daten ----
-daten = {
-    "Athlet": ["Athlet 1", "Athlet 2", "Athlet 3", "Athlet 4", "Athlet 5", "Athlet 6"],
-    "Gewicht": [77.4, 78.5, 57.8, 68, 68, 56],
-    "Dauer": [19, 19, 20, 18, 20, 23],
-    "Watt Durchschnitt": [649, 649, 664, 664, 719, 405],
-    "VLamax": [0.42, 0.43, 0.61, 0.51, 0.56, 0.39]
-}
-
-# ---- Modelltraining ----
-df = pd.DataFrame(daten)
-X = df[["Gewicht", "Dauer", "Watt Durchschnitt"]]
-y = df["VLamax"]
-modell = LinearRegression().fit(X, y)
-
-# ---- Streamlit UI ----
+# ---- Web App Layout ----
 st.image("https://raw.githubusercontent.com/360coachinglab/vlamax-app/main/360coachinglab%20gross.png", width=300)
 st.title("VLamax Auswertung")
-st.write("Basierend auf Sprintleistung, Gewicht und Dauer")
+st.write("Erweiterte Schätzung basierend auf Geschlecht, Körperkomposition und Sprintleistung")
 
+# ---- Benutzereingaben ----
+geschlecht = st.selectbox("Geschlecht", ["Mann", "Frau"])
 gewicht = st.number_input("Gewicht (kg)", min_value=30.0, max_value=120.0, value=70.0, step=0.1)
+koerperfett = st.number_input("Körperfett (%)", min_value=5.0, max_value=50.0, value=15.0, step=0.1)
+groesse = st.number_input("Grösse (cm)", min_value=140, max_value=210, value=175, step=1)
+alter = st.number_input("Alter", min_value=10, max_value=80, value=25, step=1)
 dauer = st.number_input("Sprintdauer (s)", min_value=5, max_value=30, value=20, step=1)
-watt = st.number_input("Durchschnittliche Leistung (W)", min_value=200, max_value=1500, value=650, step=10)
+watt_avg = st.number_input("Durchschnittliche Leistung (W)", min_value=200, max_value=1500, value=650, step=10)
+watt_peak = st.number_input("Spitzenleistung (W)", min_value=200, max_value=2000, value=900, step=10)
 
+# ---- Feature-Berechnung ----
+ffm = gewicht * (1 - koerperfett / 100)
+geschlecht_code = 1 if geschlecht.lower() == "frau" else 0
+
+# ---- Trainingsdaten ----
+daten = pd.read_csv("/mnt/data/INSCYD-Testdaten_der_Athleten.csv")
+daten["FFM"] = daten["Gewicht (kg)"] * (1 - daten["Körperfett (%)"] / 100)
+daten["Geschlecht_code"] = daten["Geschlecht"].str.lower().map({"mann": 0, "frau": 1})
+
+X = daten[["FFM", "Sprintdauer (s)", "Watt Durchschnitt", "Watt Peak", "Geschlecht_code"]]
+y = daten["VLamax INSCYD (mmol/l/s)"]
+modell = LinearRegression().fit(X, y)
+
+# ---- Vorhersage ----
 if st.button("VLamax berechnen"):
-    prediction = modell.predict([[gewicht, dauer, watt]])[0]
+    prediction = modell.predict([[ffm, dauer, watt_avg, watt_peak, geschlecht_code]])[0]
     st.success(f"Geschätzte VLamax: {prediction:.3f} mmol/l/s")
 
     # Batterie-Anzeige als HTML + CSS
@@ -44,5 +50,5 @@ if st.button("VLamax berechnen"):
     </div>
     """, height=280)
 
-# ---- Modell speichern (optional) ----
+# ---- Modell speichern ----
 joblib.dump(modell, "vlamax_model.joblib")
